@@ -16,7 +16,27 @@ const app = express();
 const PORT = process.env.PORT || 5010;
 
 // Middlewares
-app.use(cors());
+const allowedOrigins = [
+    'http://localhost:5173',  // Desenvolvimento local
+    'http://localhost:5174',  // Desenvolvimento local (porta alternativa)
+    'https://gitproj.netlify.app',  // Produção
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Permite requisições sem origin (como apps mobile ou Postman)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'A política de CORS não permite acesso desta origem.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
