@@ -52,6 +52,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Handle preflight requests
+app.options('*', cors());
+
 // Rotas
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postsRoutes);
