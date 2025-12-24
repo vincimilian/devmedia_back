@@ -74,19 +74,29 @@ router.post('/avatar', verifyToken, upload.single('avatar'), async (req, res) =>
 
         const userId = req.user.uid;
         const timestamp = Date.now();
-        const fileName = `avatars/${userId}/${timestamp}_${req.file.originalname}`;
+        const fileExt = req.file.originalname.split('.').pop();
+        const fileName = `avatars/${userId}/${timestamp}.${fileExt}`;
 
-        const file = bucket.file(fileName);
-
-        await file.save(req.file.buffer, {
-            metadata: {
+        // Upload para Supabase Storage
+        const { data, error } = await supabase.storage
+            .from('image_bucket')
+            .upload(fileName, req.file.buffer, {
                 contentType: req.file.mimetype,
-            },
-            public: true,
-        });
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (error) {
+            console.error('Erro ao fazer upload no Supabase:', error);
+            return res.status(500).json({ error: 'Erro ao fazer upload da imagem' });
+        }
 
         // Obter URL pública
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        const { data: publicUrlData } = supabase.storage
+            .from('image_bucket')
+            .getPublicUrl(fileName);
+
+        const publicUrl = publicUrlData.publicUrl;
 
         // Atualizar avatar no perfil do usuário
         await db.collection('users').doc(userId).update({
@@ -97,7 +107,7 @@ router.post('/avatar', verifyToken, upload.single('avatar'), async (req, res) =>
         res.json({
             success: true,
             url: publicUrl,
-            fileName
+            fileName: data.path
         });
     } catch (error) {
         console.error('Erro ao fazer upload do avatar:', error);
