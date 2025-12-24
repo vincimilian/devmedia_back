@@ -27,11 +27,23 @@ app.use(cors({
         // Permite requisições sem origin (como apps mobile ou Postman)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'A política de CORS não permite acesso desta origem.';
-            return callback(new Error(msg), false);
+        // Verifica se a origem está na lista de origens permitidas
+        const isAllowed = allowedOrigins.some(allowedOrigin => {
+            if (typeof allowedOrigin === 'string') {
+                return origin === allowedOrigin;
+            }
+            return false;
+        });
+
+        // Verifica se é um domínio .netlify.app
+        const isNetlifyDomain = /^https:\/\/[a-zA-Z0-9-]+\.netlify\.app$/.test(origin);
+
+        if (isAllowed || isNetlifyDomain) {
+            return callback(null, true);
         }
-        return callback(null, true);
+
+        const msg = 'A política de CORS não permite acesso desta origem.';
+        return callback(new Error(msg), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
