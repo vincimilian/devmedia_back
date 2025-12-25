@@ -20,6 +20,7 @@ router.post('/profile', verifyToken, async (req, res) => {
             github: github || '',
             linkedin: linkedin || '',
             website: website || '',
+            emailNotifications: req.body.emailNotifications !== undefined ? req.body.emailNotifications : true, // Default true
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -89,6 +90,7 @@ router.get('/me', verifyToken, async (req, res) => {
                 bio: '',
                 avatar: '',
                 skills: [],
+                emailNotifications: true,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
